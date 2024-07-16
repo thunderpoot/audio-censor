@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waveform Editor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <input type="file" id="audioFileInput">
+    <div id="waveform"></div>
+    <button id="importButton">Import JSON</button>
+    <input type="file" id="importFileInput" style="display: none;">
+    <button id="exportButton">Export JSON</button>
+    <pre id="jsonOutput"></pre>
+    <div id="regionsContainer"></div>
+
+    <!-- Modal for region details input -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Add Region Details</h2>
+            <label for="wordInput">Word:</label>
+            <input type="text" id="wordInput">
+            <button id="saveRegionButton">Save</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/wavesurfer.js@6/dist/wavesurfer.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@6/dist/plugin/wavesurfer.timeline.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@6/dist/plugin/wavesurfer.regions.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@6/dist/plugin/wavesurfer.minimap.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
