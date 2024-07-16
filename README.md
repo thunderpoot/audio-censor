@@ -37,7 +37,7 @@ python audio-censor.py --audio_file inputfile.mp3 --bad_words_file badwords.csv 
 
 Here are some examples, which use this example audio from the Speech Synthesis group at [Kungliga Tekniska Högskolan](https://www.speech.kth.se/) (KTH):
 
-<audio src="examples/mat.mp3" controls></audio>
+https://github.com/user-attachments/assets/b1306668-777e-4ec1-9afa-45a2cb287378
 
 ```text
 it had established periodic regular review of the status of four hundred individuals
@@ -67,7 +67,7 @@ it had [redacted] periodic regular [redacted] of the [redacted] of four hundred 
 Saved cleaned audio to mat_cleaned_20240716_162852.aiff
 ```
 
-<audio src="examples/mat_cleaned_20240716_162852.aiff" controls></audio>
+https://github.com/user-attachments/assets/4bd87624-c994-4e60-8f66-bbec7a3e70d1
 
 ![Figure_1](examples/Figure_1.png)
 ![Figure_2](examples/Figure_2.png)
@@ -105,7 +105,7 @@ it had established review of this periodic regular status of four hundred establ
 Saved rearranged audio to mat_rearranged_20240716_164629.mp3
 ```
 
-<audio src="examples/mat_rearranged_20240716_164629.mp3" controls></audio>
+https://github.com/user-attachments/assets/5e2de996-fb2d-4fa6-980f-94e0c4a48ff2
 
 The supplied "new transcript" is gibberish but demonstrates the rearrangement functionality.
 
@@ -119,7 +119,7 @@ python audio-censor.py --audio_file examples/orson.mp3 --transcribe_only --model
 
 #### Input file
 
-<audio src="examples/orson.mp3" controls></audio>
+https://github.com/user-attachments/assets/b4e5671c-d228-42ca-9474-927b1781b5c5
 
 ```text
 because Findus freeze the cod at sea and then add a crumb crisp ooh crumb crisp coating ah that's tough crumb crisp coating
@@ -148,7 +148,7 @@ Saved cleaned audio to orson_cleaned_20240716_170952.mp3
 
 As you can see, the recognition does not really understand Orson Welles and parses his speech incorrectly.
 
-<audio src="examples/orson_cleaned_20240716_170952.mp3" controls></audio>
+https://github.com/user-attachments/assets/6dd0df5b-fd39-4617-9d00-d1099577054e
 
 ## Errata
 
