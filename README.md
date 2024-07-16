@@ -28,10 +28,10 @@ pip install pydub vosk argparse
 To run the script:
 
 ```sh
-python audio-censor.py --audio_file inputfile.mp3 --bad_words_file badwords.csv --model_path vosk-model-small-en-us-0.15/ --output_format aiff --verbose
+./audio-censor.py --audio_file <path_to_audio_file> --model_path <path_to_vosk_model> [OPTIONS]
 ```
 
-(Or whichever model path you want.  The larger ones take longer to use, obviously)
+The larger vosk models take longer to use, obviously
 
 ## Examples
 
@@ -48,23 +48,23 @@ it had established periodic regular review of the status of four hundred individ
 We will censor the words "established", "review", "status", and "individuals".
 
 ```sh
-python audio-censor.py --audio_file examples/mat.mp3 --bad_words_file examples/mat_redact.csv --model_path vosk-model-small-en-us-0.15/ --output_format aiff
+./audio-censor.py --audio_file examples/mat.mp3 --bad_words_file examples/mat_redact.csv --model_path vosk-model-small-en-us-0.15/ --output_format aiff
 ```
 
 ### Example 1 output
 
 ```text
 Audio file: examples/mat.mp3
-Bad words file: examples/mat_redact.csv
 Model path: vosk-model-small-en-us-0.15/
-Loaded audio file examples/mat.mp3, duration: 5515 ms
-Loaded bad words: ['established', 'review', 'status', 'individuals']
+Loaded audio file examples/mat.mp3, duration: 5515 ms, frame_count=121600.0
+Audio segment before export: duration=5515 ms, frame_count=88236.0
 Exported audio to temp.wav
 temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=88236
-Transcript: it had established periodic regular review of the status of four hundred individuals
+Raw transcript:
+it had established periodic regular review of the status of four hundred individuals
+Loaded bad words: ['established', 'review', 'status', 'individuals']
 Censored Transcript:
 it had [redacted] periodic regular [redacted] of the [redacted] of four hundred [redacted]
-Saved cleaned audio to mat_cleaned_20240716_162852.aiff
 ```
 
 https://github.com/user-attachments/assets/4bd87624-c994-4e60-8f66-bbec7a3e70d1
@@ -81,28 +81,28 @@ it had established review of this periodic regular status of four hundred establ
 ```
 
 ```sh
-python audio-censor.py --audio_file examples/mat.mp3 --bad_words examples/mat_redact.csv --transcribe_only --model_path vosk-model-small-en-us-0.15/ --new_transcript examples/mat_new.txt --nocensor
+./audio-censor.py --audio_file examples/mat.mp3 --model_path vosk-model-small-en-us-0.15/ --new_transcript examples/mat_new.txt --nocensor
 ```
 
 ### Example 2 output
 
 ```text
 Audio file: examples/mat.mp3
-Bad words file: examples/mat_redact.csv
 Model path: vosk-model-small-en-us-0.15/
-Loaded audio file examples/mat.mp3, duration: 5515 ms
-Loaded bad words: ['established', 'review', 'status', 'individuals']
+Loaded audio file examples/mat.mp3, duration: 5515 ms, frame_count=121600.0
+Audio segment before export: duration=5515 ms, frame_count=88236.0
 Exported audio to temp.wav
 temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=88236
 Raw transcript:
 it had established periodic regular review of the status of four hundred individuals
 Loaded new transcript: ['it', 'had', 'established', 'review', 'of', 'the', 'periodic', 'regular', 'status', 'of', 'four', 'hundred', 'established', 'individuals', 'review', 'status', 'periodic', 'it', 'had']
+Audio segment before export: duration=8100 ms, frame_count=129600.0
 Exported audio to temp.wav
 temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=129600
 New Transcript: it had established review of this periodic regular status of four hundred established individuals review status periodic it had
 Transcript Without Censoring:
 it had established review of this periodic regular status of four hundred established individuals review status periodic it had
-Saved rearranged audio to mat_rearranged_20240716_164629.mp3
+Saved rearranged audio to mat_rearranged_20240716_215400.mp3
 ```
 
 https://github.com/user-attachments/assets/5e2de996-fb2d-4fa6-980f-94e0c4a48ff2
@@ -114,7 +114,7 @@ The supplied "new transcript" is gibberish but demonstrates the rearrangement fu
 We will attempt to make Orson Welles' job a bit easier.
 
 ```sh
-python audio-censor.py --audio_file examples/orson.mp3 --transcribe_only --model_path vosk-model-en-us-0.22/ --bad_words examples/mat_redact.csv --new_transcript examples/orson_new.txt
+./audio-censor.py --audio_file examples/orson.mp3 --model_path vosk-model-en-us-0.22/ --bad_words examples/mat_redact.csv --new_transcript examples/orson_new.txt
 ```
 
 #### Input file
@@ -128,22 +128,30 @@ because Findus freeze the cod at sea and then add a crumb crisp ooh crumb crisp 
 ### Example 3 output
 
 ```text
+$ ./audio-censor.py --audio_file examples/orson.mp3 --model_path vosk-model-en-us-0.22/ --bad_words examples/mat_redact.csv --new_transcript examples/orson_new.txt
 Audio file: examples/orson.mp3
-Bad words file: examples/mat_redact.csv
 Model path: vosk-model-en-us-0.22/
-Loaded audio file examples/orson.mp3, duration: 12584 ms
-Loaded bad words: ['established', 'review', 'status', 'individuals']
+Loaded audio file examples/orson.mp3, duration: 12584 ms, frame_count=554944.0
+Audio segment before export: duration=12584 ms, frame_count=201340.0
 Exported audio to temp.wav
 temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=201340
 Raw transcript:
 it's an endless freeze the car to see and then add crumb crust crumb crisp coating let's cut from crisp coating
+Loaded bad words: ['established', 'review', 'status', 'individuals']
 Loaded new transcript: ['because', 'Findus', 'freeze', 'the', 'cod', 'at', 'sea', 'and', 'then', 'add', 'a', 'crisp', 'coating']
+Word 'because' not found in the original transcript.
+Word 'Findus' not found in the original transcript.
+Word 'cod' not found in the original transcript.
+Word 'at' not found in the original transcript.
+Word 'sea' not found in the original transcript.
+Word 'a' not found in the original transcript.
+Audio segment before export: duration=2100 ms, frame_count=33600.0
 Exported audio to temp.wav
 temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=33600
 New Transcript: i use them and add coffee
 Censored Transcript:
 i use them and add coffee
-Saved cleaned audio to orson_cleaned_20240716_170952.mp3
+Saved cleaned audio to orson_cleaned_20240716_215919.mp3
 ```
 
 As you can see, the recognition does not really understand Orson Welles and parses his speech incorrectly.
@@ -154,6 +162,11 @@ https://github.com/user-attachments/assets/6dd0df5b-fd39-4617-9d00-d1099577054e
 
 Probably many. Raise an issue in this repository if you want, but there's no guarantee it will ever be fixed.
 The argument parsing and a bunch of other things need improvement but for a prototype [this is fine](https://knowyourmeme.com/memes/this-is-fine)
+
+## To Do
+
+- Add a mechanism to correct transcripts to mitigate problems seen in example 3
+- Make better examples
 
 ## License & Whatever
 
