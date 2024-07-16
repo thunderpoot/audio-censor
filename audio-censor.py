@@ -15,12 +15,28 @@ def transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False):
     temp_filename = "temp.wav"
     # Ensure correct format: 16kHz, mono, 16-bit PCM
     audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+
+    # Debug: Check the duration and frame count of the audio segment before exporting
+    print(f"Audio segment before export: duration={len(audio_segment)} ms, frame_count={audio_segment.frame_count()}")
+
+    if len(audio_segment) == 0:
+        print("Error: Audio segment is empty before export.")
+        return "", []
+
     audio_segment.export(temp_filename, format="wav")
     print(f"Exported audio to {temp_filename}")
 
     # Verify the content and properties of the temp.wav file
     with wave.open(temp_filename, 'rb') as wf:
-        print(f"temp.wav properties: channels={wf.getnchannels()}, sample_width={wf.getsampwidth()}, frame_rate={wf.getframerate()}, frames={wf.getnframes()}")
+        channels = wf.getnchannels()
+        sample_width = wf.getsampwidth()
+        frame_rate = wf.getframerate()
+        frames = wf.getnframes()
+        print(f"temp.wav properties: channels={channels}, sample_width={sample_width}, frame_rate={frame_rate}, frames={frames}")
+
+    if frames == 0:
+        print("Error: Exported temp.wav file has zero frames.")
+        return "", []
 
     model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000) # 16kHz
@@ -108,16 +124,31 @@ def load_new_transcript(transcript_file):
     return new_transcript
 
 # Function to rearrange audio segments based on new transcript
-def rearrange_audio_segments(audio_segment, words, new_transcript):
+def rearrange_audio_segments(audio_segment, words, new_transcript, verbose):
     segments = []
     word_dict = {word_info['word']: word_info for word_info in words}
 
+    if verbose:
+        print("Original words with timestamps:")
+        for word_info in words:
+            print(f"{word_info['word']}: start={word_info['start']}, end={word_info['end']}")
+
     for word in new_transcript:
-        if word in word_dict:
-            start_time = word_dict[word]['start'] * 1000  # Convert to milliseconds
-            end_time = word_dict[word]['end'] * 1000  # Convert to milliseconds
+        lower_word = word.lower()  # Ensure comparison is case-insensitive
+        if lower_word in word_dict:
+            word_info = word_dict[lower_word]
+            start_time = word_info['start'] * 1000  # Convert to milliseconds
+            end_time = word_info['end'] * 1000  # Convert to milliseconds
             segment = audio_segment[start_time:end_time]
             segments.append(segment)
+            if verbose:
+                print(f"Added segment for word '{word}': start_time={start_time}, end_time={end_time}")
+        else:
+            print(f"Word '{word}' not found in the original transcript.")
+
+    if not segments:
+        print("No segments found. Generating silent audio segment.")
+        return AudioSegment.silent(duration=len(audio_segment))
 
     return sum(segments)
 
@@ -139,32 +170,32 @@ def main(**kwargs):
         SetLogLevel(0)
 
     print(f"Audio file: {audio_file}")
-    print(f"Bad words file: {bad_words_file}")
     print(f"Model path: {model_path}")
 
     # Determine the output format
     input_format = os.path.splitext(audio_file)[1][1:]
-    output_format = args.output_format if args.output_format else input_format
+    output_format = output_format if output_format else input_format
 
     # Load the input audio file with pydub
     try:
         audio_segment = AudioSegment.from_file(audio_file)
-        print(f"Loaded audio file {audio_file}, duration: {len(audio_segment)} ms")  # Debug
+        print(f"Loaded audio file {audio_file}, duration: {len(audio_segment)} ms, frame_count={audio_segment.frame_count()}")  # Debug
     except Exception as e:
         print(f"Error loading audio file {audio_file}: {e}")
         return
 
-    # Load bad words from CSV file
-    try:
-        bad_words = load_bad_words(bad_words_file)
-        print(f"Loaded bad words: {bad_words}")  # Debug
-    except Exception as e:
-        print(f"Error loading bad words from file {bad_words_file}: {e}")
+    if len(audio_segment) == 0:
+        print("Error: Loaded audio segment is empty.")
         return
 
-    # Transcribe the audio to text with timestamps
+    if transcribe_only:
+        transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose)
+        print("Transcript:")
+        print(transcript)
+        return
+
     try:
-        transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False)
+        transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose)
         print("Raw transcript:")
         print(transcript)
         if verbose:
@@ -173,19 +204,25 @@ def main(**kwargs):
         print(f"Error during transcription: {e}")
         return
 
-    if transcribe_only and not new_transcript:
-        if not nocensor:
-            censored_transcript = censor_transcript(transcript, bad_words)
-            print("Censored transcript:")
-            print(censored_transcript)
+    if not bad_words_file and not ( transcribe_only or nocensor):
+        print("Error: --bad_words_file is required unless --transcribe_only or nocensor are set.")
         return
 
-    # Rearrange audio based on new transcript if provided
+    if bad_words_file:
+        try:
+            bad_words = load_bad_words(bad_words_file)
+            print(f"Loaded bad words: {bad_words}")  # Debug
+        except Exception as e:
+            print(f"Error loading bad words from file {bad_words_file}: {e}")
+            return
+    else:
+        bad_words = []
+
     if new_transcript:
         try:
             new_transcript = load_new_transcript(new_transcript)
             print(f"Loaded new transcript: {new_transcript}")  # Debug
-            audio_segment = rearrange_audio_segments(audio_segment, words, new_transcript)
+            audio_segment = rearrange_audio_segments(audio_segment, words, new_transcript, verbose)
             # Retranscribe the rearranged audio to get new timestamps
             transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False)
             print("New Transcript:", transcript)  # Debug
@@ -210,43 +247,45 @@ def main(**kwargs):
             print(f"Error saving rearranged audio to {output_file}: {e}")
         return
 
-    # Find positions of bad words in the transcript
-    try:
-        bad_word_timestamps = find_bad_word_timestamps(words, bad_words, verbose)
-        if verbose:
-            print(f"Bad word timestamps: {bad_word_timestamps}")  # Debug
-    except Exception as e:
-        print(f"Error finding bad words: {e}")
-        return
+    if bad_words:
+        try:
+            bad_word_timestamps = find_bad_word_timestamps(words, bad_words, verbose)
+            if verbose:
+                print(f"Bad word timestamps: {bad_word_timestamps}")  # Debug
+        except Exception as e:
+            print(f"Error finding bad words: {e}")
+            return
 
-    # Replace bad words with beeps in the audio
-    try:
-        cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps, 10, verbose)
-    except Exception as e:
-        print(f"Error beeping out bad words: {e}")
-        return
+        # Replace bad words with beeps in the audio
+        try:
+            cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps, 10, verbose)
+        except Exception as e:
+            print(f"Error beeping out bad words: {e}")
+            return
 
-    # Output the censored transcript
-    censored_transcript = censor_transcript(transcript, bad_words)
-    print("Censored Transcript:")
-    print(censored_transcript)
+        # Output the censored transcript
+        censored_transcript = censor_transcript(transcript, bad_words)
+        print("Censored Transcript:")
+        print(censored_transcript)
 
-    # Generate output file name
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    input_file_name, _ = os.path.splitext(os.path.basename(audio_file))
-    output_file = f"{input_file_name}_cleaned_{timestamp}.{output_format}"
+        # Generate output file name
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        input_file_name, _ = os.path.splitext(os.path.basename(audio_file))
+        output_file = f"{input_file_name}_cleaned_{timestamp}.{output_format}"
 
-    # Save the cleaned audio file
-    try:
-        cleaned_audio.export(output_file, format=output_format)
-        print(f"Saved cleaned audio to {output_file}")
-    except Exception as e:
-        print(f"Error saving cleaned audio to {output_file}: {e}")
+        # Save the cleaned audio file
+        try:
+            cleaned_audio.export(output_file, format=output_format)
+            print(f"Saved cleaned audio to {output_file}")
+        except Exception as e:
+            print(f"Error saving cleaned audio to {output_file}: {e}")
+    else:
+        print("No bad words provided for censoring.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Audio Censoring Script")
     parser.add_argument('--audio_file', type=str, required=True, help='Path to the input audio file')
-    parser.add_argument('--bad_words_file', type=str, required=True, help='Path to the bad words CSV file')
+    parser.add_argument('--bad_words_file', type=str, help='Path to the bad words CSV file')
     parser.add_argument('--output_format', type=str, default='mp3', help='Desired output format of the audio file')
     parser.add_argument('--nocensor', action='store_true', help='Flag to output transcript without censoring')
     parser.add_argument('--model_path', type=str, required=True, help='Path to the Vosk model')
