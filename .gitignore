@@ -1,0 +1,6 @@
+venv/
+input_audio/
+output_audio/
+misc/
+vosk*/
+.DS_Store
