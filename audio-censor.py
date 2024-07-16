@@ -131,7 +131,7 @@ def main(**kwargs):
     output_format = kwargs.get('output_format')
     nocensor = kwargs.get('nocensor', False)
     new_transcript = kwargs.get('new_transcript', False)
-    transcribe_only = kwargs.get('transcribe_only', False)
+    transcribe_only = kwargs.get('transcribe_only')
     model_path = kwargs.get('model_path')
     verbose = kwargs.get('verbose')
 
@@ -165,16 +165,19 @@ def main(**kwargs):
     # Transcribe the audio to text with timestamps
     try:
         transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False)
-        print("Transcript:", transcript)  # Debug
+        print("Raw transcript:")
+        print(transcript)
         if verbose:
             print("Words with timestamps:", words)  # Debug
     except Exception as e:
         print(f"Error during transcription: {e}")
         return
 
-    if transcribe_only:
-        print("Transcript Only:")
-        print(transcript)
+    if transcribe_only and not new_transcript:
+        if not nocensor:
+            censored_transcript = censor_transcript(transcript, bad_words)
+            print("Censored transcript:")
+            print(censored_transcript)
         return
 
     # Rearrange audio based on new transcript if provided
@@ -248,7 +251,7 @@ if __name__ == "__main__":
     parser.add_argument('--nocensor', action='store_true', help='Flag to output transcript without censoring')
     parser.add_argument('--model_path', type=str, required=True, help='Path to the Vosk model')
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
-    parser.add_argument('--transcribe_only', type=str, help='Transcribe without generating new audio')
+    parser.add_argument('--transcribe_only', action='store_true', help='Transcribe without generating new audio')
     parser.add_argument('--new_transcript', type=str, help='Path to .txt file with desired output words')
 
     args = parser.parse_args()
