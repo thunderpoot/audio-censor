@@ -4,6 +4,7 @@ import argparse
 import csv
 from pydub import AudioSegment
 from pydub.generators import Sine
+import wave
 import os
 from datetime import datetime
 from vosk import Model, KaldiRecognizer, SetLogLevel
@@ -15,9 +16,14 @@ SetLogLevel(0)
 # Function to transcribe audio to text with timestamps using Vosk
 def transcribe_audio_with_timestamps(audio_segment, model_path):
     temp_filename = "temp.wav"
-    # Ensure correct format: 16kHz, mono
-    audio_segment = audio_segment.set_frame_rate(16000).set_channels(2)
+    # Ensure correct format: 16kHz, mono, 16-bit PCM
+    audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
     audio_segment.export(temp_filename, format="wav")
+    print(f"Exported audio to {temp_filename}")  # Debug statement
+
+    # Verify the content and properties of the temp.wav file
+    with wave.open(temp_filename, 'rb') as wf:
+        print(f"temp.wav properties: channels={wf.getnchannels()}, sample_width={wf.getsampwidth()}, frame_rate={wf.getframerate()}, frames={wf.getnframes()}")
 
     model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000)
@@ -32,6 +38,7 @@ def transcribe_audio_with_timestamps(audio_segment, model_path):
         data = wf.read(4000)
         if len(data) == 0:
             break
+        print(f"Read {len(data)} bytes from WAV file, first 20 bytes: {data[:20]}")  # Debug statement
         if recognizer.AcceptWaveform(data):
             results.append(json.loads(recognizer.Result()))
         else:
@@ -110,12 +117,20 @@ def main():
     transcribe_only = args.transcribe_only
 
     # Load the input audio file with pydub
-    audio_segment = AudioSegment.from_file(audio_file)
-    print(f"Loaded audio file {audio_file}, duration: {len(audio_segment)} ms")  # Debug statement
+    try:
+        audio_segment = AudioSegment.from_file(audio_file)
+        print(f"Loaded audio file {audio_file}, duration: {len(audio_segment)} ms")  # Debug statement
+    except Exception as e:
+        print(f"Error loading audio file {audio_file}: {e}")
+        return
 
     # Load bad words from CSV file
-    bad_words = load_bad_words(bad_words_file)
-    print(f"Loaded bad words: {bad_words}")  # Debug statement
+    try:
+        bad_words = load_bad_words(bad_words_file)
+        print(f"Loaded bad words: {bad_words}")  # Debug statement
+    except Exception as e:
+        print(f"Error loading bad words from file {bad_words_file}: {e}")
+        return
 
     # Transcribe the audio to text with timestamps
     try:
@@ -134,11 +149,19 @@ def main():
         return
 
     # Find positions of bad words in the transcript
-    bad_word_timestamps = find_bad_word_timestamps(words, bad_words)
-    print(f"Bad word timestamps: {bad_word_timestamps}")  # Debug statement
+    try:
+        bad_word_timestamps = find_bad_word_timestamps(words, bad_words)
+        print(f"Bad word timestamps: {bad_word_timestamps}")  # Debug statement
+    except Exception as e:
+        print(f"Error finding bad words: {e}")
+        return
 
     # Replace bad words with beeps in the audio
-    cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps)
+    try:
+        cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps)
+    except Exception as e:
+        print(f"Error beeping out bad words: {e}")
+        return
 
     # Output the censored transcript
     censored_transcript = censor_transcript(transcript, bad_words)
@@ -151,8 +174,11 @@ def main():
     output_file = f"{input_file_name}_cleaned_{timestamp}.{output_format}"
 
     # Save the cleaned audio file
-    cleaned_audio.export(output_file, format=output_format)
-    print(f"Saved cleaned audio to {output_file}")  # Debug statement
+    try:
+        cleaned_audio.export(output_file, format=output_format)
+        print(f"Saved cleaned audio to {output_file}")  # Debug statement
+    except Exception as e:
+        print(f"Error saving cleaned audio to {output_file}: {e}")
 
 if __name__ == "__main__":
     main()
