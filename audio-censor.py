@@ -80,7 +80,7 @@ def censor_transcript(transcript, bad_words):
     return ' '.join(words)
 
 # Function to replace bad words with beeps
-def beep_out_bad_words(audio_segment, bad_word_timestamps, beep_volume_reduction=20, verbose=False):
+def beep_out_bad_words(audio_segment, bad_word_timestamps, beep_volume_reduction, verbose=False):
     for start_time, end_time in bad_word_timestamps:
         start_ms = int(start_time)
         end_ms = int(end_time)
@@ -218,7 +218,7 @@ def main(**kwargs):
 
     # Replace bad words with beeps in the audio
     try:
-        cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps, verbose)
+        cleaned_audio = beep_out_bad_words(audio_segment, bad_word_timestamps, 10, verbose)
     except Exception as e:
         print(f"Error beeping out bad words: {e}")
         return
