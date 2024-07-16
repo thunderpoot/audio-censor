@@ -70,6 +70,7 @@ def transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False):
         if "result" in result:
             words.extend(result["result"])
 
+    print(f'Tx:{words}')
     return transcript.strip(), words
 
 # Function to find bad words and their timestamps in the transcribed text
@@ -164,6 +165,7 @@ def main(**kwargs):
     new_transcript = kwargs.get('new_transcript', False)
     transcribe_only = kwargs.get('transcribe_only')
     model_path = kwargs.get('model_path')
+    transcript_json_path = kwargs.get('transcript_json_path')
     verbose = kwargs.get('verbose')
 
     if verbose:
@@ -195,7 +197,14 @@ def main(**kwargs):
         return
 
     try:
-        transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose)
+        if transcript_json_path:
+            jsonfile = open(transcript_json_path)
+            words = json.load(jsonfile)
+            jsonfile.close()
+            # words = json.loads(manual_words_json)
+            transcript = ' '.join(word["word"] for word in words)
+        else:
+            transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose)
         print("Raw transcript:")
         print(transcript)
         if verbose:
@@ -289,6 +298,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_format', type=str, default='mp3', help='Desired output format of the audio file')
     parser.add_argument('--nocensor', action='store_true', help='Flag to output transcript without censoring')
     parser.add_argument('--model_path', type=str, required=True, help='Path to the Vosk model')
+    parser.add_argument('--transcript_json_path', type=str, help='Path to JSON transcript data')
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
     parser.add_argument('--transcribe_only', action='store_true', help='Transcribe without generating new audio')
     parser.add_argument('--new_transcript', type=str, help='Path to .txt file with desired output words')
