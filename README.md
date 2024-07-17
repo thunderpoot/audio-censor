@@ -158,6 +158,31 @@ As you can see, the recognition does not really understand Orson Welles and pars
 
 https://github.com/user-attachments/assets/6dd0df5b-fd39-4617-9d00-d1099577054e
 
+So, we can use the [web app](web_transcribe/index.html) to manually transcribe the audio file:
+
+![transcription-web-app-screenshot](examples/transcription-web-app-screenshot.png)
+
+... and then use the resulting JSON file as a manual transcription, so that we get the desired output audio:
+
+```sh
+./audio-censor.py --audio_file examples/orson.mp3 --model_path vosk-model-small-en-us-0.15 --new_transcript examples/orson_new.txt --nocensor --transcript_json_path examples/orson_transcript.json
+```
+
+```text
+Audio file: examples/orson.mp3
+Model path: vosk-model-small-en-us-0.15
+Loaded audio file examples/orson.mp3, duration: 12584 ms, frame_count=554944.0
+Raw transcript:
+because findus freeze the cod at sea and then add a crumb crisp ooh crumb crisp coating ah that's tough crumb crisp coating
+Loaded new transcript: ['because', 'findus', 'freeze', 'the', 'cod', 'at', 'sea', 'and', 'then', 'add', 'a', 'crisp', 'coating']
+Audio segment before export: duration=4419 ms, frame_count=70702.0
+Exported audio to temp.wav
+temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=70702
+Saved rearranged audio to orson_rearranged_20240717_010213.mp3
+```
+
+`<final orson audio file here>`
+
 ## Errata
 
 Probably many. Raise an issue in this repository if you want, but there's no guarantee it will ever be fixed.
