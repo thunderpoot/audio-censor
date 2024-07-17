@@ -183,6 +183,34 @@ Saved rearranged audio to orson_rearranged_20240717_010213.mp3
 
 https://github.com/user-attachments/assets/3a8fc632-3f09-40d8-ad77-c0ec9c0038a0
 
+
+## Workflow Diagram
+
+```mermaid
+graph TD
+A[Start] --> B[Parse Arguments]
+B --> C{Transcript JSON Provided?}
+C -- Yes --> D[Load JSON Transcript]
+C -- No --> E{Transcribe Only?}
+E -- Yes --> F[Transcribe Audio and Output Transcript]
+E -- No --> G[Load and Transcribe Audio]
+D --> H{Rearrange Words?}
+G --> H
+H -- Yes --> I[Rearrange Words in Transcript]
+H -- No --> J[Skip Rearranging]
+I --> K{Censoring?}
+J --> K
+K -- No --> L[Output Transcript and Audio File]
+K -- Yes --> M{Bad Words Provided?}
+M -- No --> N[Error: No Bad Words]
+M -- Yes --> O[Censor Bad Words]
+O --> P[Beep Out Bad Words]
+P --> Q[Output Cleaned Audio]
+L --> R[End]
+Q --> R
+```
+
+
 ## Errata
 
 Probably many. Raise an issue in this repository if you want, but there's no guarantee it will ever be fixed.
@@ -190,8 +218,7 @@ The argument parsing and a bunch of other things need improvement but for a prot
 
 ## To Do
 
-- Add a mechanism to correct transcripts to mitigate problems seen in example 3
-- Make better examples
+- Improve stylesheet of web transcription interface
 
 ## License & Whatever
 
