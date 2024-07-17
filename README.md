@@ -158,7 +158,7 @@ As you can see, the recognition does not really understand Orson Welles and pars
 
 https://github.com/user-attachments/assets/6dd0df5b-fd39-4617-9d00-d1099577054e
 
-So, we can use the [web app](web_transcribe/index.html) to manually transcribe the audio file:
+So, we can use the [web app](https://thunderpoot.github.io/audio-censor/) to manually transcribe the audio file:
 
 ![transcription-web-app-screenshot](examples/transcription-web-app-screenshot.png)
 
