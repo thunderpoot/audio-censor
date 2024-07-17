@@ -70,7 +70,6 @@ def transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False):
         if "result" in result:
             words.extend(result["result"])
 
-    print(f'Tx:{words}')
     return transcript.strip(), words
 
 # Function to find bad words and their timestamps in the transcribed text
@@ -234,7 +233,8 @@ def main(**kwargs):
             audio_segment = rearrange_audio_segments(audio_segment, words, new_transcript, verbose)
             # Retranscribe the rearranged audio to get new timestamps
             transcript, words = transcribe_audio_with_timestamps(audio_segment, model_path, verbose=False)
-            print("New Transcript:", transcript)  # Debug
+            if not transcript_json_path:
+                print("New Transcript:", transcript)  # Debug
             if verbose:
                 print("New Words with timestamps:", words)  # Debug
         except Exception as e:
@@ -242,8 +242,9 @@ def main(**kwargs):
             return
 
     if nocensor:
-        print("Transcript Without Censoring:")
-        print(transcript)
+        if not transcript_json_path:
+            print("Transcript Without Censoring:")
+            print(transcript)
         # Generate output file name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         input_file_name, _ = os.path.splitext(os.path.basename(audio_file))
