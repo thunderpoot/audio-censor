@@ -181,7 +181,7 @@ temp.wav properties: channels=1, sample_width=2, frame_rate=16000, frames=70702
 Saved rearranged audio to orson_rearranged_20240717_010213.mp3
 ```
 
-`<final orson audio file here>`
+https://github.com/user-attachments/assets/3a8fc632-3f09-40d8-ad77-c0ec9c0038a0
 
 ## Errata
 
