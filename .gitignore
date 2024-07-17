@@ -4,3 +4,4 @@ output_audio/
 misc/
 vosk*/
 .DS_Store
+*.mp4
